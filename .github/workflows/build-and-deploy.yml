@@ -21,16 +21,3 @@ jobs:
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/n8n-custom:latest ./docker
           docker push ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
-
-  deploy-to-local:
-    needs: build-and-push
-    runs-on: self-hosted
-    steps:
-      - name: Pull and Run Container on Local Docker
-        run: |
-          docker pull ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
-          docker stop n8n || exit 0
-          docker rm n8n || exit 0
-          docker run -d --name n8n -p 5678:5678 ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
-          echo "n8n is running on http://localhost:5678"
-          echo "To access n8n, open your browser and go to http://localhost:5678"
