@@ -1,0 +1,36 @@
+name: Build & Deploy n8n to GHCR and Local Docker
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/n8n-custom:latest ./docker
+          docker push ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
+
+  deploy-to-local:
+    needs: build-and-push
+    runs-on: self-hosted
+    steps:
+      - name: Pull and Run Container on Local Docker
+        run: |
+          docker pull ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
+          docker stop n8n || exit 0
+          docker rm n8n || exit 0
+          docker run -d --name n8n -p 5678:5678 ghcr.io/${{ github.repository_owner }}/n8n-custom:latest
+          echo "n8n is running on http://localhost:5678"
+          echo "To access n8n, open your browser and go to http://localhost:5678"
